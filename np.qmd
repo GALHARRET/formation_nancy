@@ -1,0 +1,413 @@
+# Tests non paramétriques {.unnumbered}
+
+
+
+```{r echo=F}
+library(kableExtra)
+```
+
+
+Le diaporama sur les tests non paramétriques :
+
+![Slides](tests_NP.pdf){width=100%}
+
+## Indice de dispersion non paramétrique
+
+On définit le MAD (Median Absolute Deviation) qui peut être vu comme un équivalent non paramétrique à $\sigma$.
+
+$$
+MAD=\text{median}|X_i-\widetilde X|.
+$$
+Donc pour $X\sim \mathcal N(\mu,\sigma)$ on a par définition
+$P(|X-\mu|<MAD)=0.5$ ce qui donne $P(|Z|<\frac{MAD}{\sigma})=0.5$ où $Z\sim \mathcal N(0,1)$ et donc $\frac{MAD}{\sigma}=\Phi^{-1}(\frac{3}{4}).$
+
+
+
+# Comparaison de deux groupes indépendants
+
+On commence par l'exemple 
+
+```{r}
+library(coin)
+data("neuropathy")
+library(ggplot2)
+library(dplyr)
+```
+
+On représente graphiquement les données 
+
+```{r}
+ggplot(neuropathy,aes(x=group,y=pain))+
+  geom_boxplot()+
+  labs(title="Distribution des résultats selon le groupe",
+       y="Mesure de la douleur",
+       x="Groupe"
+       )
+```
+
+On regarde aussi les paramètres de position et de dispersion
+
+```{r}
+neuropathy |>
+  group_by(group)|>
+  summarise(M=mean(pain),SD=sd(pain),
+            Med=median(pain),mad=mad(pain))
+```
+
+
+Définition des deux séries de données :
+
+```{r}
+x=neuropathy |>
+  filter(group=="control") |> 
+  select(pain) |>
+  unlist() # Pour en faire un vecteur
+```
+
+Faire la même chose pour créer le vecteur y 
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+
+y=neuropathy |>
+  filter(group=="treat") |> 
+  select(pain) |>
+  unlist()
+```
+
+## Les tests sur les paramètres de position 
+
+On regarde tout d'abord les tests paramétriques :
+
+```{r}
+# Student
+t.test(x,y,var.equal=T)
+# Welch
+t.test(x,y,var.equal=F)
+# test de Yuen
+library(robnptests)
+```
+
+Puis les tests non paramétriques :
+
+```{r}
+# Test de Mann-Withney
+wilcox.test(x,y)
+
+trimmed_test(x,y)
+# Test de Behrens-Fisher
+library(npsm)
+fp.test(x,y)
+# Test de permutation
+library(coin)
+oneway_test(pain~group,data=neuropathy)
+# Test de Brunner-Manzel
+library(brunnermunzel)
+brunnermunzel.test(x,y)
+```
+
+## Les tests sur les paramètres d'échelle
+
+```{r}
+# Test de Levene
+library(car)
+leveneTest(pain~group,data=neuropathy)
+# Test de Fligner-Killeen
+fk.test(x,y)
+```
+
+### Répondre aux questions suivantes :
+
+- Que pensez-vous de ces résultats ? 
+
+- Quel test vous paraît le plus adapté compte tenu des données considérées ?
+
+### Un autre exemple :
+
+```{r}
+data("mercuryfish")
+```
+
+On s'interesse aux trois questions suivantes :
+
+1. Le taux de mercure présent dans le sang est-il significativement supérieur chez le groupe exposé ?
+
+2. La proportion de cellules avec des anomalies structurales est-elle significativement supérieure chez le groupe exposé ?
+
+# Comparaison de deux groupes appariés
+
+Charger les data de ObrienKaiserLong. On va uniquement dans un premier temps s'intéresser à la comparaison pre versus post : 
+
+```{r}
+data("OBrienKaiserLong")
+data=OBrienKaiserLong |>
+  filter(phase %in% c("pre","post")) |>
+  select(score,phase)
+```
+
+
+Peut-on penser que les scores ont significativement évolués entre avant et après ?
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+data |>
+  group_by(phase) |>
+  summarise(M=mean(score),SD=sd(score),
+            Med=median(score),mad=mad(score))
+
+ggplot(data,aes(x=phase,y=score))+
+  geom_boxplot()
+
+x=data|>
+  filter(phase=="pre") |>
+  select(score) |>
+  unlist()
+
+y=data|>
+  filter(phase=="post") |>
+  select(score) |>
+  unlist()
+
+t.test(x,y,paired=T)
+wilcox.test(x,y,paired=T)
+library(EnvStats)
+oneSamplePermutationTest(x-y)
+```
+
+
+# ANOVA à un facteur sur Groupes indépendants
+
+Hettmansperger and McKean (2011) étudient l'effet de quatre drogues sur la réduction de cholesterol (LDL) chez les cailles. Attention les groupes sont déséquilibrées !
+
+### Analyses descriptives
+
+Faire les analyses descriptives
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+data("quail")
+quail |>
+  group_by(treat) |>
+  summarise(M=mean(ldl),SD=sd(ldl),
+            Med=median(ldl),mad=mad(ldl))
+
+ggplot(quail,aes(x=treat,y=ldl))+
+  geom_boxplot()
+```
+
+## Première modélisation : ANOVA paramétrique
+
+```{r}
+mod=aov(ldl~treat,data=quail)
+library(car)
+Anova(mod,type="III")
+```
+
+Pour ceux qui préfèrent les contrastes : on peut se dire que le deuxième traitement paraît réduire de façon plus efficace le ldl que les autres. On pourrait tester $H_0:\mu_2=\frac1{3}(\mu_1+\mu_3+\mu_4)$ versus $H_1:\mu_2\not =\frac1{3}(\mu_1+\mu_3+\mu_4)$
+
+```{r}
+# Estimation du modèle linéaire :
+mod=lm(ldl~treat,data=quail)
+H=as.matrix(c(-1/3,1,-1/3,-1/3))
+# Estimation de la différence des moyennes 
+mod$coefficients%*%H
+# Estimation de l'erreur standard
+sqrt(diag(t(H)%*%vcov(mod)%*%H))
+# Calcul de la statistique de stats
+z=mod$coefficients%*%H/sqrt(diag(t(H)%*%vcov(mod)%*%H))
+# Calcul de la p-value
+2*(1-pnorm(abs(z)))
+```
+
+## Deuxième modélisation : test de KW
+
+```{r}
+kruskal_test(ldl~treat,data=quail)
+```
+## Trosième modélisation : permutation
+
+```{r}
+library(lmPerm)
+mod=aovp(ldl~treat,data=quail)
+Anova(mod,type="III")
+```
+# Quatrième modélisation ANOVA sur les rangs
+
+```{r}
+library(npsm)
+oneway.rfit(y = quail$ldl, g = quail$treat)
+```
+
+Retour sur les contrastes :
+
+```{r}
+H=as.matrix(c(-1/3,1,-1/3,-1/3))
+# Estimation de la différence
+mod=rfit(ldl~treat-1,data=quail)
+mod$coefficients%*%H
+# Estimation de l'erreur standard
+sqrt(diag(t(H)%*%vcov(mod)%*%H))
+# Calcul de la statistique de stats
+z=mod$coefficients%*%H/sqrt(diag(t(H)%*%vcov(mod)%*%H))
+# Calcul de la p-value
+2*(1-pnorm(abs(z)))
+```
+
+# RM Anova à un facteur
+
+```{r}
+data("OBrienKaiserLong")
+OBrienKaiserLong |>
+  group_by(phase) |>
+  summarise(M=mean(score),SD=sd(score),Med=median(score),
+            MAD=mad(score))
+
+# Pour ré-ordonner les facteurs de la variable phase
+
+OBrienKaiserLong=OBrienKaiserLong |>
+  mutate(phase=factor(phase,levels=c("pre","fup","post")))
+
+ggplot(OBrienKaiserLong,aes(x=phase,y=score))+
+  geom_boxplot()
+```
+
+```{r}
+library(lmerTest)
+mod=lmer(score~phase+(1|id),data=OBrienKaiserLong)
+anova(mod,type=3)
+library(emmeans)
+postHoc=emmeans(mod,specs = ~phase)
+pwpm(postHoc)
+```
+On peut aussi faire un contraste par exemple pour tester $H_0:\mu_{pre}=\frac 1{2}(\mu_{fup}+\mu_{post}).$
+
+```{r}
+mod1=summary(lmer(score~phase-1+(1|id),data=OBrienKaiserLong))
+## Pour l'estimation des moyennes :
+moy=mod1$coefficients[,"Estimate"]
+## Pour l'estimation de la matrice de covariance
+mod1$vcov
+```
+A vous de jouer.
+
+```{r eval=F}
+#| code-fold: true
+#| code-summary: "Show the code"
+H=as.matrix(c(-1,1/2,1/2))
+
+# Estimation de la différence de moyenne :
+M=moy%*%H
+print(M)
+# Estimation de l'erreur standard :
+ES=sqrt(diag(t(H)%*%mod1$vcov%*%H))
+print(ES)
+# Estimation de la statistique de test :
+z=M/ES
+print(z)
+# Estimation de la p-value
+2*(1-pnorm(abs(z)))
+```
+
+On peut aussi faire le test de Friedman :
+
+```{r}
+friedman_test(score~phase,data=OBrienKaiserLong)
+```
+
+ou bien de la permutation :
+
+```{r}
+library(permutes)
+permutes::perm.lmer(score~phase,data=OBrienKaiserLong,
+                    type="anova")
+```
+
+
+# ANOVA à deux facteurs indépendants
+
+Charger la base serumLH. 
+
+On commence par une analyse descriptive des données :
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+data("serumLH")
+serumLH=serumLH |>
+  mutate(LRF.dose=factor(LRF.dose,levels=c("0","10","50","250","1250")))
+
+serumLH |>
+  group_by(light.regime,LRF.dose) |>
+  summarise(median(serum))
+
+ggplot(serumLH,aes(x=LRF.dose,y=serum,color=light.regime))+geom_boxplot()
+```
+
+## Anova paramétrique
+
+```{r}
+mod<-lm(serum~LRF.dose*light.regime,data=serumLH)
+Anova(mod,type="III")
+```
+## Anova basée sur les rangs 
+
+```{r}
+mod<-raov(serum~LRF.dose*light.regime,data=serumLH)
+mod
+```
+On veut faire des comparaisons de l'effet dose selon le type de régime (à vous !)
+
+```{r}
+mod=rfit(serum~LRF.dose:light.regime-1,data=serumLH)
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+H=rbind(diag(c(1,1,1,1,1)),diag(c(-1,-1,-1,-1,-1)))
+D=mod$coefficients%*%H
+ES=sqrt(diag(t(H)%*%vcov(mod)%*%H))
+z=D/ES
+2*(1-pnorm(abs(z)))
+```
+
+
+
+# RM ANOVA à 1 facteur Within et 1 facteur between
+
+On utilise la base de données ObrienKaiserLong.
+On ajoute le facteur treatment à l'analyse sur ce jeu de données.
+
+Faire les analyses descriptives :
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+OBrienKaiserLong |>
+  group_by(phase,treatment) |>
+  summarise(M=mean(score),SD=sd(score),Med=median(score),
+            MAD=mad(score))
+
+ggplot(OBrienKaiserLong,aes(x=phase,y=score,color=treatment))+
+  geom_boxplot()
+```
+
+
+```{r}
+mod=lmer(score~phase*treatment+(1|id),data=OBrienKaiserLong)
+anova(mod,type=3)
+posthoc=emmeans(mod,specs = ~phase|treatment)
+pwpm(posthoc)
+```
+On peut le faire aussi sous forme de contrastes comme précédemment.
+
+## Reprendre l'exemple précédent
+
+On ajoute le facteur group à l'exemple Baumann. Faire les analyses nécessaires.
+
+
+
+

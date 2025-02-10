@@ -1,0 +1,108 @@
+# Statistique bayésienne {.unnumbered}  
+
+```{r echo=F}
+library(kableExtra)
+```
+
+
+Le diaporama  :
+
+![Slides](bayes.pdf){width=100%}
+
+# Test de student sur groupes indépendants
+
+```{r}
+library(coin)
+data("neuropathy")
+library(BayesFactor)
+library(ggplot2)
+library(dplyr)
+x=neuropathy |>
+  filter(group=="control") |> 
+  select(pain) |>
+  unlist()
+y=neuropathy |>
+  filter(group=="treat") |> 
+  select(pain) |>
+  unlist()
+ttestBF(x,y,rscale=1)
+# La loi a posteriori de la différence des moyennes
+samples = ttestBF(x,y,posterior = TRUE, iterations = 10000)
+plot(samples[,"mu"])
+```
+
+### Un autre exemple :
+
+```{r}
+data("mercuryfish")
+```
+
+On s'interesse aux trois questions suivantes :
+
+1. Le taux de mercure présent dans le sang est-il significativement supérieur chez le groupe exposé ?
+
+2. La proportion de cellules avec des anomalies structurales est-elle significativement supérieure chez le groupe exposé ?
+
+
+# Test de student sur groupes appariés
+
+L'argument paired=T permet de faire des tests sur groupes appariés :
+
+```{r}
+library(carData)
+data("OBrienKaiserLong")
+data=OBrienKaiserLong |>
+  filter(phase %in% c("pre","post")) |>
+  select(score,phase)
+
+```
+
+Faire le test Bayésien de Student :
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show the code"
+x=data |>
+  filter(phase=="pre") |>
+  select(score) |>
+  unlist()
+
+y=data |>
+  filter(phase=="post") |>
+  select(score) |>
+  unlist()
+
+ttestBF(x,y,paired=T,rscale=1)
+# La loi a posteriori de la différence des moyennes
+samples = ttestBF(x,y,paired=T,posterior = TRUE, iterations = 10000)
+plot(samples[,"mu"])
+```
+
+# Régression linéaire Bayésienne
+
+Pour calculer les facteurs de Bayes :
+
+```{r}
+data("attitude")
+res = regressionBF(rating ~ ., data = attitude, progress=TRUE)
+head(res)
+head(res/res[length(res)])
+```
+
+Pour calculer les coefficients du modèle :
+
+```{r}
+library(rstanarm)
+
+
+model_bayes <- stan_glm(rating ~ ., data = attitude, seed=44)
+print(model_bayes, digits = 3)
+
+library(bayesplot)
+mcmc_dens(model_bayes, pars = c("complaints"))
+
+library(bayestestR)
+hdi(model_bayes)
+describe_posterior(model_bayes)
+```
+

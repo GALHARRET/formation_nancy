@@ -1,0 +1,26 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "Formation Statistique Nancy 2025"
+  author: "Jean-Michel Galharret"
+  date: "2/3/2025"
+  chapters:
+    - index.qmd
+    - np.qmd
+    - bayes.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+  pdf:
+    documentclass: scrreprt
+
+editor: visual
+
