@@ -1,15 +1,12 @@
 # Tests non paramétriques {.unnumbered}
 
-
-
 ```{r echo=F}
 library(kableExtra)
 ```
 
-
 Le diaporama sur les tests non paramétriques :
 
-![Slides](tests_NP.pdf){width=100%}
+![Slides](tests_NP.pdf){width="100%"}
 
 ## Indice de dispersion non paramétrique
 
@@ -17,15 +14,11 @@ On définit le MAD (Median Absolute Deviation) qui peut être vu comme un équiv
 
 $$
 MAD=\text{median}|X_i-\widetilde X|.
-$$
-Donc pour $X\sim \mathcal N(\mu,\sigma)$ on a par définition
-$P(|X-\mu|<MAD)=0.5$ ce qui donne $P(|Z|<\frac{MAD}{\sigma})=0.5$ où $Z\sim \mathcal N(0,1)$ et donc $\frac{MAD}{\sigma}=\Phi^{-1}(\frac{3}{4}).$
-
-
+$$ Donc pour $X\sim \mathcal N(\mu,\sigma)$ on a par définition $P(|X-\mu|<MAD)=0.5$ ce qui donne $P(|Z|<\frac{MAD}{\sigma})=0.5$ où $Z\sim \mathcal N(0,1)$ et donc $\frac{MAD}{\sigma}=\Phi^{-1}(\frac{3}{4}).$
 
 # Comparaison de deux groupes indépendants
 
-On commence par l'exemple 
+On commence par l'exemple
 
 ```{r}
 library(coin)
@@ -34,7 +27,7 @@ library(ggplot2)
 library(dplyr)
 ```
 
-On représente graphiquement les données 
+On représente graphiquement les données
 
 ```{r}
 ggplot(neuropathy,aes(x=group,y=pain))+
@@ -54,7 +47,6 @@ neuropathy |>
             Med=median(pain),mad=mad(pain))
 ```
 
-
 Définition des deux séries de données :
 
 ```{r}
@@ -64,7 +56,7 @@ x=neuropathy |>
   unlist() # Pour en faire un vecteur
 ```
 
-Faire la même chose pour créer le vecteur y 
+Faire la même chose pour créer le vecteur y
 
 ```{r}
 #| code-fold: true
@@ -76,7 +68,7 @@ y=neuropathy |>
   unlist()
 ```
 
-## Les tests sur les paramètres de position 
+## Les tests sur les paramètres de position
 
 On regarde tout d'abord les tests paramétriques :
 
@@ -119,9 +111,9 @@ fk.test(x,y)
 
 ### Répondre aux questions suivantes :
 
-- Que pensez-vous de ces résultats ? 
+-   Que pensez-vous de ces résultats ?
 
-- Quel test vous paraît le plus adapté compte tenu des données considérées ?
+-   Quel test vous paraît le plus adapté compte tenu des données considérées ?
 
 ### Un autre exemple :
 
@@ -131,13 +123,13 @@ data("mercuryfish")
 
 On s'interesse aux trois questions suivantes :
 
-1. Le taux de mercure présent dans le sang est-il significativement supérieur chez le groupe exposé ?
+1.  Le taux de mercure présent dans le sang est-il significativement supérieur chez le groupe exposé ?
 
-2. La proportion de cellules avec des anomalies structurales est-elle significativement supérieure chez le groupe exposé ?
+2.  La proportion de cellules avec des anomalies structurales est-elle significativement supérieure chez le groupe exposé ?
 
 # Comparaison de deux groupes appariés
 
-Charger les data de ObrienKaiserLong. On va uniquement dans un premier temps s'intéresser à la comparaison pre versus post : 
+Charger les data de ObrienKaiserLong. On va uniquement dans un premier temps s'intéresser à la comparaison pre versus post :
 
 ```{r}
 data("OBrienKaiserLong")
@@ -145,7 +137,6 @@ data=OBrienKaiserLong |>
   filter(phase %in% c("pre","post")) |>
   select(score,phase)
 ```
-
 
 Peut-on penser que les scores ont significativement évolués entre avant et après ?
 
@@ -175,7 +166,6 @@ wilcox.test(x,y,paired=T)
 library(EnvStats)
 oneSamplePermutationTest(x-y)
 ```
-
 
 # ANOVA à un facteur sur Groupes indépendants
 
@@ -227,6 +217,7 @@ z=mod$coefficients%*%H/sqrt(diag(t(H)%*%vcov(mod)%*%H))
 ```{r}
 kruskal_test(ldl~treat,data=quail)
 ```
+
 ## Trosième modélisation : permutation
 
 ```{r}
@@ -234,6 +225,7 @@ library(lmPerm)
 mod=aovp(ldl~treat,data=quail)
 Anova(mod,type="III")
 ```
+
 # Quatrième modélisation ANOVA sur les rangs
 
 ```{r}
@@ -282,6 +274,7 @@ library(emmeans)
 postHoc=emmeans(mod,specs = ~phase)
 pwpm(postHoc)
 ```
+
 On peut aussi faire un contraste par exemple pour tester $H_0:\mu_{pre}=\frac 1{2}(\mu_{fup}+\mu_{post}).$
 
 ```{r}
@@ -291,6 +284,7 @@ moy=mod1$coefficients[,"Estimate"]
 ## Pour l'estimation de la matrice de covariance
 mod1$vcov
 ```
+
 A vous de jouer.
 
 ```{r eval=F}
@@ -325,10 +319,9 @@ permutes::perm.lmer(score~phase,data=OBrienKaiserLong,
                     type="anova")
 ```
 
-
 # ANOVA à deux facteurs indépendants
 
-Charger la base serumLH. 
+Charger la base serumLH.
 
 On commence par une analyse descriptive des données :
 
@@ -352,12 +345,14 @@ ggplot(serumLH,aes(x=LRF.dose,y=serum,color=light.regime))+geom_boxplot()
 mod<-lm(serum~LRF.dose*light.regime,data=serumLH)
 Anova(mod,type="III")
 ```
-## Anova basée sur les rangs 
+
+## Anova basée sur les rangs
 
 ```{r}
 mod<-raov(serum~LRF.dose*light.regime,data=serumLH)
 mod
 ```
+
 On veut faire des comparaisons de l'effet dose selon le type de régime (à vous !)
 
 ```{r}
@@ -374,12 +369,9 @@ z=D/ES
 2*(1-pnorm(abs(z)))
 ```
 
-
-
 # RM ANOVA à 1 facteur Within et 1 facteur between
 
-On utilise la base de données ObrienKaiserLong.
-On ajoute le facteur treatment à l'analyse sur ce jeu de données.
+On utilise la base de données ObrienKaiserLong. On ajoute le facteur treatment à l'analyse sur ce jeu de données.
 
 Faire les analyses descriptives :
 
@@ -395,19 +387,15 @@ ggplot(OBrienKaiserLong,aes(x=phase,y=score,color=treatment))+
   geom_boxplot()
 ```
 
-
 ```{r}
 mod=lmer(score~phase*treatment+(1|id),data=OBrienKaiserLong)
 anova(mod,type=3)
 posthoc=emmeans(mod,specs = ~phase|treatment)
 pwpm(posthoc)
 ```
+
 On peut le faire aussi sous forme de contrastes comme précédemment.
 
 ## Reprendre l'exemple précédent
 
 On ajoute le facteur group à l'exemple Baumann. Faire les analyses nécessaires.
-
-
-
-

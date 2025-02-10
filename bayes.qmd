@@ -1,13 +1,12 @@
-# Statistique bayésienne {.unnumbered}  
+# Statistique bayésienne {.unnumbered}
 
 ```{r echo=F}
 library(kableExtra)
 ```
 
+Le diaporama :
 
-Le diaporama  :
-
-![Slides](bayes.pdf){width=100%}
+![Slides](bayes.pdf){width="100%"}
 
 # Test de student sur groupes indépendants
 
@@ -39,10 +38,9 @@ data("mercuryfish")
 
 On s'interesse aux trois questions suivantes :
 
-1. Le taux de mercure présent dans le sang est-il significativement supérieur chez le groupe exposé ?
+1.  Le taux de mercure présent dans le sang est-il significativement supérieur chez le groupe exposé ?
 
-2. La proportion de cellules avec des anomalies structurales est-elle significativement supérieure chez le groupe exposé ?
-
+2.  La proportion de cellules avec des anomalies structurales est-elle significativement supérieure chez le groupe exposé ?
 
 # Test de student sur groupes appariés
 
@@ -105,4 +103,3 @@ library(bayestestR)
 hdi(model_bayes)
 describe_posterior(model_bayes)
 ```
-

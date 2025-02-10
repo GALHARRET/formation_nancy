@@ -2,7 +2,7 @@
 
 Les packages nécessaires pour suivre cette formation sont listés ci-dessous :
 
-```{r}
+```{r eval=F}
 install.packages(
   c("ggplot2","dplyr","coin","npsm","lmPerm","lmerTest",
     "permutes","emmeans","BayesFactor","bayestestR","rstanarm",
@@ -14,4 +14,3 @@ install.packages(
 Mon site Web :
 
 [site Web](https://galharret.github.io/WEBSITE/)
-
